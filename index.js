@@ -33,7 +33,7 @@ function checkUrl(url, msg) {
     return;
   }
 
-  var isDiscord = url.startsWith('https://cdn.discordapp');
+  var isDiscord = url.startsWith('https://cdn.discordapp') || url.indexOf('blogspot.com') !== -1;
 
   request.get(url).on('response', function (resp) {
     resp.setEncoding('base64');
@@ -54,7 +54,9 @@ function checkUrl(url, msg) {
       }
       if (type.startsWith('text/html')) {
         og(url, function(err, meta){
-          if (meta.image && meta.image.type && meta.image.type != 'image/gif') {
+          console.log(meta);
+          if (meta.image && meta.image.url) {
+            image.source.imageUri = meta.image.url;
             checkIfCar(image, msg);
           }
         });
@@ -76,7 +78,8 @@ function checkIfCar(image, msg) {
         'image': image,
         'features': [
           {
-            'type': 'LABEL_DETECTION'
+            'type': 'LABEL_DETECTION',
+            'maxResults': 50
           }
         ]
       }
@@ -84,11 +87,47 @@ function checkIfCar(image, msg) {
   };
 
   client.post(googleURL, payload, function (err, res, body) {
+    console.log(payload.requests);
+    console.log(body);
+    console.log(body.responses[0].error);
     console.log(body.responses[0].labelAnnotations);
-    if (body.responses && body.responses[0].labelAnnotations) { 
-      body.responses[0].labelAnnotations.forEach(function (label) {
-        if (label.description == 'car') {
-          msg.reply('Hey I think there\'s a car in that picture');
+
+    var carLabels = [
+      'car',
+      'intersection',
+      'vehicle',
+      'road'
+    ];
+
+    if (body.responses && body.responses[0].labelAnnotations) {
+      var stop = false;
+      body.responses[0].labelAnnotations.forEach(function (l) {
+        var label = l.description;
+        if (!stop) {
+          if (l.score >= 0.9 && (label == 'car' || label == 'motor vehicle')) {
+            msg.reply('There\'s a car in that picture, my dude');
+            stop = true;
+          } else if (l.score < 0.8 && label == 'vehicle') {
+            msg.reply('I think that\'s a car? Maybe?');
+            stop = true;
+          } else if (
+            label == 'intersection' ||
+            label == 'vehicle' ||
+            label == 'road' ||
+            label == 'downtown' ||
+            label == 'street' ||
+            label == 'car' ||
+            label == 'motor vehicle'
+          ) {
+            msg.reply('Hey I think there\'s a car in that picture');
+            stop = true;
+          } else if (
+            label == 'viking ships' ||
+            label == 'longship'
+          ) {
+            msg.reply('Longship, motherfucker. Look out');
+            stop = true;
+          }
         }
       });
     }
