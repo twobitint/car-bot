@@ -9,8 +9,8 @@
     "dotenv": "^5.0.0",
     "erlpack": "github:hammerandchisel/erlpack",
     "open-graph": "^0.2.3",
-    "uws": "^9.14.0",
-    "xmlhttprequest": "^1.8.0"
+    "request-json": "^0.6.3",
+    "uws": "^9.14.0"
   },
   "devDependencies": {},
   "scripts": {
