@@ -125,11 +125,34 @@ function checkIfCar(image, msg) {
             label == 'viking ships' ||
             label == 'longship'
           ) {
-            msg.reply('Longship, motherfucker. Look out');
+            sendLongshipMessage(msg);
             stop = true;
           }
         }
       });
     }
   });
+}
+
+function sendLongshipMessage(msg)
+{
+  var client = jsonRequest.createClient('https://api.imgur.com/3/');
+
+  var payload = {
+//    'q': 'Katheryn Winnick'
+  };
+  client.headers['Authorization'] = 'Client-ID ' + process.env.IMGUR_CLIENT_ID;
+  client.get('gallery/search/viral/all?q=Katheryn+Winnick', payload, function (err, res, body) {
+    var gallery = randomListItem(body.data);
+    var image = gallery.is_album ? randomListItem(gallery.images) : gallery;
+
+    msg.channel.send({ files: [image.link]})
+       .then((resp) => { msg.reply('That is one sexy longboat you have there'); })
+       .catch(console.error);
+  });
+}
+
+function randomListItem(list)
+{
+  return list[Math.floor(Math.random()*list.length)];
 }
